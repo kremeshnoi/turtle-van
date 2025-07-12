@@ -1,16 +1,18 @@
-use songbird::{input::{Input, YoutubeDl, AuxMetadata}, typemap::TypeMapKey};
+use serenity::prelude::TypeMapKey;
+use songbird::input::{AuxMetadata, Input, YoutubeDl};
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use typemap_rev::TypeMap;
 
-use crate::types::{Error, Context};
 use crate::consts::{
-    FAILED_TO_RETRIEVE_HTTP,
-    FAILED_TO_RETRIEVE_GUILD_ID,
-    FAILED, FAILED_TO_JOIN_CHANNEL,
-    FAILED_TO_PROVIDE_URL_TO_SONG_QUERY,
-    FAILED_TO_RETRIEVE_SONGBIRD_VOICE_CLIENT
+    FAILED, FAILED_TO_JOIN_CHANNEL, FAILED_TO_PROVIDE_URL_TO_SONG_QUERY,
+    FAILED_TO_RETRIEVE_GUILD_ID, FAILED_TO_RETRIEVE_HTTP, FAILED_TO_RETRIEVE_SONGBIRD_VOICE_CLIENT,
 };
+use crate::types::{Context, Error};
 
-use crate::cmd::shared::join_voice_channel::join_voice_channel;
+use crate::HttpKey;
 use crate::cmd::shared::get_user_voice_channel::get_user_voice_channel;
+use crate::cmd::shared::join_voice_channel::join_voice_channel;
 
 struct TrackMetaKey;
 
@@ -18,18 +20,11 @@ impl TypeMapKey for TrackMetaKey {
     type Value = AuxMetadata;
 }
 
-struct HttpKey;
-
-impl TypeMapKey for HttpKey {
-    type Value = reqwest::Client;
-}
+#[derive(Default)]
+pub struct MyTrackData(pub RwLock<TypeMap>);
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn play(
-    ctx: Context<'_>,
-    #[rest = true]
-    query: Option<String>,
-) -> Result<(), Error> {
+pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().expect(FAILED_TO_RETRIEVE_GUILD_ID);
     let voice_client = songbird::get(ctx.serenity_context())
         .await
@@ -44,12 +39,12 @@ pub async fn play(
                     .cloned()
                     .expect(FAILED_TO_RETRIEVE_HTTP)
             };
-            
+
             let handler_lock = join_voice_channel(&voice_client, guild_id, channel).await?;
             let mut handler = handler_lock.lock().await;
-            
+
             let query = match query {
-                Some(query) => query,
+                Some(q) => q,
                 None => {
                     return match handler.queue().current() {
                         Some(track) => {
@@ -75,15 +70,14 @@ pub async fn play(
 
             let track_handle = handler.enqueue_input(input).await;
 
-            track_handle
-                .typemap()
-                .write()
-                .await
-                .insert::<TrackMetaKey>(metadata);
+            {
+                let my_track_data: Arc<MyTrackData> = track_handle.data::<MyTrackData>();
+                let mut data_lock = my_track_data.0.write().await;
+                data_lock.insert::<TrackMetaKey>(metadata);
+            }
 
             Ok(())
         }
-
         None => {
             ctx.say(FAILED_TO_JOIN_CHANNEL).await?;
             Err(Error::from(FAILED_TO_JOIN_CHANNEL))

@@ -1,4 +1,4 @@
-use crate::types::{Context};
+use crate::types::Context;
 use poise::serenity_prelude::ChannelId;
 
 pub fn get_user_voice_channel(ctx: &Context<'_>) -> Option<ChannelId> {
