@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 
 # Setup Rust environment
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-RUN /root/.cargo/bin/rustup default nightly
+RUN /root/.cargo/bin/rustup default stable
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Setup yt-dlp
@@ -25,7 +25,6 @@ RUN chmod +x /usr/local/bin/yt-dlp
 
 # Setup App
 WORKDIR /app
-RUN cp /usr/local/bin/yt-dlp /app/yt-dlp
 COPY . .
 
 # Build App
