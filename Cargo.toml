@@ -1,25 +1,16 @@
-cargo-features = ["edition2024"]
-
 [package]
 name = "turtle-van"
 version = "1.0.0"
 edition = "2024"
 
-[dependencies.typemap_rev]
-version = "0.3"
-
-[dependencies.symphonia]
-version = "0.5.3"
-features = ["aac", "mp3", "isomp4", "alac"]
-
 [dependencies]
-serenity = { version = "0.12.4", features = [
-    "framework",
-    "standard_framework",
-    "client",
-] }
-songbird = { version = "0.5.0", features = ["builtin-queue"] }
-tokio = { version = "1", features = ["full"] }
+serenity = { version="0.12.1", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "voice", "cache", "standard_framework"] }
+songbird = { version = "0.4.1", features = ["builtin-queue"] }
+symphonia = { version = "0.5", features = [ "all-formats" ] }
 dotenv = "0.15"
-poise = "0.6.1"
-reqwest = "0.12.12"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt"] }
+
+reqwest = { version = "0.11", default-features = false, features = ["rustls-tls", "json", "socks"] }
+poise = { version = "0.6.1-rc1", features = ["cache"] }

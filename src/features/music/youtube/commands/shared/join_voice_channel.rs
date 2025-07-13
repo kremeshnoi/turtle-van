@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use songbird::Call;
 use tokio::sync::Mutex;
-use crate::types::Error;
+use crate::shared::Error;
 
 pub async fn join_voice_channel(
     voice_client: &Arc<songbird::Songbird>,
