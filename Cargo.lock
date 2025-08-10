@@ -3097,6 +3097,7 @@ dependencies = [
  "serenity",
  "songbird",
  "symphonia",
+ "thiserror",
  "tokio",
  "tracing",
  "tracing-subscriber",

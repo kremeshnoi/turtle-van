@@ -1,41 +1,39 @@
-
-use crate::shared::{Context, Error, Errors};
-use crate::features::music::youtube::commands::shared::{
-    get_user_voice_channel::get_user_voice_channel,
-};
+use crate::features::music::youtube::commands::shared::get_user_voice_channel::get_user_voice_channel;
+use crate::shared::{Context, Error};
+use super::shared::Errors;
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn skip(ctx: Context<'_>) -> Result<(), Error> {
-    ctx.say("⏭️ Executing `skip` command...").await?;
+    let guild_id = ctx.guild_id().ok_or(Errors::FAILED_TO_RETRIEVE_GUILD_ID)?;
 
-    let guild_id = ctx
-        .guild_id()
-        .ok_or(Errors::FAILED_TO_RETRIEVE_GUILD_ID)?;
+    if get_user_voice_channel(&ctx).is_err() {
+        ctx.say("You must be in a voice channel to use this command.").await?;
+        return Ok(());
+    }
 
     let voice_client = songbird::get(ctx.serenity_context())
         .await
         .ok_or_else(|| Error::from(Errors::FAILED_TO_RETRIEVE_SONGBIRD_VOICE_CLIENT))?
         .clone();
 
-    match get_user_voice_channel(&ctx) {
-        Some(c) => c,
+    let call = match voice_client.get(guild_id) {
+        Some(call) => call,
         None => {
-            ctx.say("❌ You must be in a voice channel to use this command.").await?;
+            ctx.say("Not currently in a voice channel.").await?;
             return Ok(());
         }
     };
 
-    if let Some(call) = voice_client.get(guild_id) {
-        let handler = call.lock().await;
+    let handler = call.lock().await;
 
-        if let Some(track) = handler.queue().current() {
+    match handler.queue().current() {
+        Some(track) => {
             track.stop()?;
-            ctx.say("⏭️ Skipped current track.").await?;
-        } else {
-            ctx.say("ℹ️ No track is currently playing.").await?;
+            ctx.say("Skipped current track.").await?;
         }
-    } else {
-        ctx.say("❌ Not currently in a voice channel.").await?;
+        None => {
+            ctx.say("No track is currently playing.").await?;
+        }
     }
 
     Ok(())
