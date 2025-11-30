@@ -6,7 +6,7 @@ use tokio::task;
 use super::shared::Errors;
 use crate::HttpKey;
 use crate::features::music::youtube::commands::shared::{
-    get_user_voice_channel::get_user_voice_channel, join_voice_channel::join_voice_channel,
+    get_user_voice_channel_id::get_user_voice_channel_id, join_voice_channel::join_voice_channel,
 };
 use crate::shared::{Context, Error};
 
@@ -26,7 +26,7 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
         .ok_or_else(|| Error::from(Errors::FAILED_TO_RETRIEVE_SONGBIRD_VOICE_CLIENT))?
         .clone();
 
-    let channel = match get_user_voice_channel(&ctx) {
+    let channel = match get_user_voice_channel_id(&ctx) {
         Ok(c) => c,
         Err(_) => {
             return Err(Error::from(Errors::FAILED_TO_JOIN_CHANNEL));

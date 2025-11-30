@@ -1,3 +1,7 @@
 .env
+.zed
 .idea
+.vscode
+/mcp
 /target
+AGENTS.md

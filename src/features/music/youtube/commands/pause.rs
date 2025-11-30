@@ -36,4 +36,3 @@ pub async fn pause(ctx: Context<'_>) -> Result<(), Error> {
 
     Ok(())
 }
-
