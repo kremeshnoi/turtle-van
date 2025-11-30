@@ -1,13 +1,14 @@
-use crate::features::music::youtube::commands::shared::get_user_voice_channel::get_user_voice_channel;
-use crate::shared::{Context, Error};
 use super::shared::Errors;
+use crate::features::music::youtube::commands::shared::get_user_voice_channel_id::get_user_voice_channel_id;
+use crate::shared::{Context, Error};
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn skip(ctx: Context<'_>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().ok_or(Errors::FAILED_TO_RETRIEVE_GUILD_ID)?;
 
-    if get_user_voice_channel(&ctx).is_err() {
-        ctx.say("You must be in a voice channel to use this command.").await?;
+    if get_user_voice_channel_id(&ctx).is_err() {
+        ctx.say("You must be in a voice channel to use this command.")
+            .await?;
         return Ok(());
     }
 

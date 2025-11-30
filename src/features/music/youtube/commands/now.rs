@@ -1,9 +1,8 @@
-
-use crate::shared::{Context, Error};
 use super::shared::Errors;
+use crate::shared::{Context, Error};
+use serenity::prelude::TypeMapKey;
 use songbird::input::AuxMetadata;
 use songbird::tracks::PlayMode;
-use serenity::prelude::TypeMapKey;
 
 struct TrackMetaKey;
 
@@ -30,23 +29,31 @@ pub async fn now(ctx: Context<'_>) -> Result<(), Error> {
             let state = match track_info.playing {
                 PlayMode::Play => "Playing",
                 PlayMode::Pause => "Paused",
-                _ => "Stopped"
+                _ => "Stopped",
             };
 
             if let Some(metadata) = metadata {
-                let title = metadata.title.unwrap_or_else(|| "Unknown Title".to_string());
-                let artist = metadata.artist.unwrap_or_else(|| "Unknown Artist".to_string());
-                let duration = metadata.duration.map_or("Unknown Duration".to_string(), |d| {
-                    format!("{}:{:02}", d.as_secs() / 60, d.as_secs() % 60)
-                });
+                let title = metadata
+                    .title
+                    .unwrap_or_else(|| "Unknown Title".to_string());
+                let artist = metadata
+                    .artist
+                    .unwrap_or_else(|| "Unknown Artist".to_string());
+                let duration = metadata
+                    .duration
+                    .map_or("Unknown Duration".to_string(), |d| {
+                        format!("{}:{:02}", d.as_secs() / 60, d.as_secs() % 60)
+                    });
 
                 ctx.say(format!(
                     "{state}\n🎵 **{title}**\n👤 {artist}\n⏱️ Duration: {duration}"
-                )).await?;
+                ))
+                .await?;
             } else {
                 ctx.say(format!(
                     "{state}\nℹ️ No metadata available for current track"
-                )).await?;
+                ))
+                .await?;
             }
         } else {
             ctx.say("ℹ️ No track is currently playing").await?;
