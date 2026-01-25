@@ -1,5 +1,6 @@
 mod features;
 mod shared;
+use crate::shared::AppError;
 use crate::shared::Data;
 use crate::shared::*;
 use dotenv::dotenv;
@@ -19,8 +20,8 @@ impl TypeMapKey for HttpKey {
 async fn main() {
     dotenv().ok();
 
-    let discord_token =
-        std::env::var("DISCORD_TOKEN").expect(Errors::FAILED_TO_RETRIEVE_DISCORD_TOKEN);
+    let discord_token = std::env::var("DISCORD_TOKEN")
+        .unwrap_or_else(|_| panic!("{}", AppError::DiscordTokenNotFound));
 
     let all_commands = {
         let mut cmds = Vec::new();
@@ -49,7 +50,7 @@ async fn main() {
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data {})
+                Ok(Data::new())
             })
         })
         .build();
@@ -59,9 +60,9 @@ async fn main() {
         .register_songbird()
         .type_map_insert::<HttpKey>(HttpClient::new())
         .await
-        .expect(Errors::FAILED_TO_CREATE_CLIENT);
+        .unwrap_or_else(|_| panic!("{}", AppError::ClientCreateFailed));
 
     if let Err(error) = client.start().await {
-        println!("{}: {}", Errors::FAILED_TO_START_CLIENT, error);
+        println!("{}", AppError::ClientStartFailed(error.to_string()));
     }
 }

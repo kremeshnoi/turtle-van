@@ -1,14 +1,14 @@
-use super::shared::Errors;
+use super::shared::{MusicYoutubeError, MusicYoutubeMessage};
 use crate::shared::{Context, Error};
 use songbird::tracks::PlayMode;
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn pause(ctx: Context<'_>) -> Result<(), Error> {
-    let guild_id = ctx.guild_id().ok_or(Errors::FAILED_TO_RETRIEVE_GUILD_ID)?;
+    let guild_id = ctx.guild_id().ok_or(MusicYoutubeError::GuildIdNotFound)?;
 
     let voice_client = songbird::get(ctx.serenity_context())
         .await
-        .ok_or_else(|| Error::from(Errors::FAILED_TO_RETRIEVE_SONGBIRD_VOICE_CLIENT))?
+        .ok_or(MusicYoutubeError::SongbirdClientNotFound)?
         .clone();
 
     if let Some(call) = voice_client.get(guild_id) {
@@ -20,18 +20,20 @@ pub async fn pause(ctx: Context<'_>) -> Result<(), Error> {
             match track_info.playing {
                 PlayMode::Play => {
                     track.pause()?;
-                    ctx.say("Paused the current track").await?;
+                    ctx.say(MusicYoutubeMessage::PAUSED_TRACK).await?;
                 }
                 _ => {
                     track.play()?;
-                    ctx.say("Resumed the current track").await?;
+                    ctx.say(MusicYoutubeMessage::RESUMED_TRACK).await?;
                 }
             }
         } else {
-            ctx.say("No track is currently playing").await?;
+            ctx.say(MusicYoutubeError::NoTrackPlaying.to_string())
+                .await?;
         }
     } else {
-        ctx.say("Not currently in a voice channel").await?;
+        ctx.say(MusicYoutubeError::BotNotInVoiceChannel.to_string())
+            .await?;
     }
 
     Ok(())

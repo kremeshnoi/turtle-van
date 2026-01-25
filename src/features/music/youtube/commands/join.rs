@@ -1,6 +1,6 @@
 use crate::shared::{Context, Error};
 
-use super::shared::Errors;
+use super::shared::MusicYoutubeError;
 use super::shared::{
     get_user_voice_channel_id::get_user_voice_channel_id, join_voice_channel::join_voice_channel,
 };
@@ -11,16 +11,15 @@ pub async fn join(ctx: Context<'_>) -> Result<(), Error> {
 
     let voice_client = songbird::get(serenity_ctx)
         .await
-        .ok_or(Errors::FAILED_TO_RETRIEVE_SONGBIRD_VOICE_CLIENT)?
+        .ok_or(MusicYoutubeError::SongbirdClientNotFound)?
         .clone();
 
-    let guild_id = ctx.guild_id().ok_or(Errors::FAILED_TO_RETRIEVE_GUILD_ID)?;
+    let guild_id = ctx.guild_id().ok_or(MusicYoutubeError::GuildIdNotFound)?;
 
     let channel_id = match get_user_voice_channel_id(&ctx) {
         Ok(id) => id,
         Err(_) => {
-            ctx.say(Errors::FAILED_TO_JOIN_CHANNEL).await?;
-            return Ok(());
+            return Err(Error::from(MusicYoutubeError::JoinChannelFailed));
         }
     };
 

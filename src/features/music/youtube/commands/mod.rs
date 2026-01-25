@@ -4,6 +4,7 @@ pub(crate) mod now;
 pub(crate) mod pause;
 pub(crate) mod play;
 pub(crate) mod shared;
+pub(crate) mod shuffle;
 pub(crate) mod skip;
 
 use crate::shared::{Data, Error};
@@ -17,5 +18,6 @@ pub fn commands() -> Vec<Command<Data, Error>> {
         skip::skip(),
         pause::pause(),
         now::now(),
+        shuffle::shuffle(),
     ]
 }

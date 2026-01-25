@@ -8,7 +8,9 @@ serenity = { version="0.12.1", default-features = false, features = ["client", "
 songbird = { version = "0.4.1", features = ["builtin-queue"] }
 symphonia = { version = "0.5", features = [ "all-formats" ] }
 dotenv = "0.15"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync"] }
+tokio-util = "0.7"
+rand = "0.8"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt"] }
 
