@@ -8,54 +8,55 @@
 
 ## Features
 
-- Slash command support
-- YouTube playback (search or URL)
-- Queue management
-- Voice connection handling
-- Built in Rust 2024 for performance and safety
+- YouTube playback (search, URL, playlists)
+- Queue management with shuffle support
+- Background playlist loading with cancellation
+- Slash commands
+- Built with Rust 2024 edition
 
 ---
 
 ## Commands
 
-| Command | Description | Usage |
-|:--------|:-------------|:------|
-| `/join`  | Join your voice channel | `/join` |
-| `/leave` | Leave current voice channel | `/leave` |
-| `/play`  | Play YouTube content (URL or search query) | `/play <url or search>` |
-| `/pause` | Pause the current track | `/pause` |
-| `/skip`  | Skip to the next track | `/skip` |
-| `/now`   | Show info about the current track | `/now` |
+| Command | Description |
+|:--------|:------------|
+| `/join` | Join your voice channel |
+| `/leave` | Leave current voice channel |
+| `/play <query>` | Play YouTube content (URL, playlist, or search) |
+| `/pause` | Toggle pause/resume |
+| `/skip` | Skip current track |
+| `/skip all` | Clear entire queue and stop playlist loading |
+| `/shuffle` | Shuffle the queue |
+| `/now` | Show current track info |
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
-- **Rust 2024 edition**
-- **Discord bot token** with voice permissions
+
+- Rust 2024 edition
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed and in PATH
+- Discord bot token with voice permissions
 
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/turtle-van.git
+git clone https://github.com/nickshelmet/turtle-van.git
 cd turtle-van
 
-# Set up environment
 echo "DISCORD_TOKEN=your_token_here" > .env
 
-# Build and run
 cargo build --release
 ./target/release/turtle-van
 ```
 
-## Architecture Overview
+---
 
-Turtle Van is powered by:
+## Tech Stack
 
-- **[Serenity](https://github.com/serenity-rs/serenity)** – handles Discord API interactions and event dispatching
-- **[Songbird](https://github.com/serenity-rs/songbird)** – provides voice connection management and audio streaming
-- **Tokio** – async runtime enabling concurrent operations for voice and command handling
-- **YouTube extractor** – lightweight module for resolving YouTube URLs and search queries
-- **Slash command framework** – structured routing for `/` commands with contextual responses
+- [Serenity](https://github.com/serenity-rs/serenity) - Discord API
+- [Poise](https://github.com/serenity-rs/poise) - Slash command framework
+- [Songbird](https://github.com/serenity-rs/songbird) - Voice and audio
+- [Tokio](https://tokio.rs) - Async runtime
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) - YouTube extraction
