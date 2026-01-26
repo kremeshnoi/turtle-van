@@ -1,7 +1,6 @@
 <div align="center">
-  <h1>Turtle Van</h1>
-  <p><b>Discord music bot built with Rust</b></p>
-  <img width="1000" alt="Turtle Van" src="https://github.com/user-attachments/assets/cc131f2c-bd9b-4b21-b17e-517989594d81" />
+  <img width="150" alt="Turtle Van" src="https://github.com/user-attachments/assets/4da2f4b8-420c-4513-b87c-47aa26d1b34f" />
+  <p><b>Turtle Van — Discord music bot built with Rust</b></p>
 </div>
 
 ---
