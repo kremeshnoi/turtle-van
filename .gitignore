@@ -1,11 +1,2 @@
 .env
-.zed
-.idea
-.vscode
-.claude
-
-/mcp
 /target
-
-AGENTS.md
-CLAUDE.md
