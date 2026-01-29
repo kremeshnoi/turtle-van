@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="150" alt="Turtle Van" src="https://github.com/user-attachments/assets/4da2f4b8-420c-4513-b87c-47aa26d1b34f" />
+  <img width="160" alt="Turtle Van" src="https://github.com/user-attachments/assets/4da2f4b8-420c-4513-b87c-47aa26d1b34f" />
   <p><b>Turtle Van — Discord music bot built with Rust</b></p>
 </div>
 
