@@ -25,7 +25,7 @@ RUN curl -fsSL https://deno.land/install.sh | sh
 ENV PATH="/root/.deno/bin:${PATH}"
 
 # Setup yt-dlp (via pip for latest version + yt-dlp-ejs)
-RUN pip3 install --break-system-packages "yt-dlp[default] @ https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz"
+RUN pip3 install "yt-dlp[default] @ https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz"
 
 # Setup App
 WORKDIR /app
