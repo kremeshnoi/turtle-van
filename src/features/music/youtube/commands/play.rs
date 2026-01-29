@@ -1,30 +1,23 @@
+use songbird::events::{Event, TrackEvent};
 use songbird::input::{Input, YoutubeDl};
 use std::process::Command;
+use std::sync::Arc;
 use tokio::task;
 use tokio_util::sync::CancellationToken;
+use tracing::{debug, error, info, warn};
 
-use super::shared::{MusicYoutubeError, MusicYoutubeMessage, TrackMetaKey};
-use crate::HttpKey;
-use crate::features::music::youtube::commands::shared::{
-    get_user_voice_channel_id::get_user_voice_channel_id, join_voice_channel::join_voice_channel,
+use super::shared::{
+    MusicYoutubeError, MusicYoutubeMessage, TrackDisplayInfo, TrackMetaKey, TrackPlayNotifier,
+    VoiceContext, join_voice_channel,
 };
+use crate::HttpKey;
 use crate::shared::{Context, Error};
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(), Error> {
-    let guild_id = ctx.guild_id().ok_or(MusicYoutubeError::GuildIdNotFound)?;
-
-    let voice_client = songbird::get(ctx.serenity_context())
-        .await
-        .ok_or(MusicYoutubeError::SongbirdClientNotFound)?
-        .clone();
-
-    let channel = match get_user_voice_channel_id(&ctx) {
-        Ok(c) => c,
-        Err(_) => {
-            return Err(Error::from(MusicYoutubeError::JoinChannelFailed));
-        }
-    };
+    let vc = VoiceContext::from_ctx(&ctx).await?;
+    let user_channel = VoiceContext::require_user_channel(&ctx)
+        .map_err(|_| MusicYoutubeError::JoinChannelFailed)?;
 
     let http_client = {
         let data = ctx.serenity_context().data.read().await;
@@ -33,9 +26,12 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
             .ok_or(MusicYoutubeError::HttpClientNotFound)?
     };
 
-    let handler_lock = join_voice_channel(&voice_client, guild_id, channel).await?;
+    info!(guild_id = ?vc.guild_id, channel_id = ?user_channel, "Joining voice channel");
+    let handler_lock = join_voice_channel(&vc.voice_client, vc.guild_id, user_channel).await?;
+    info!("Joined voice channel");
 
     let mut handler = handler_lock.lock().await;
+    debug!(queue_length = handler.queue().len(), "Queue state");
 
     let query = match query {
         Some(q) => {
@@ -46,19 +42,23 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
         None => {
             return match handler.queue().current() {
                 Some(track) => {
-                    if let Err(e) = track.play() {
-                        Err(Error::from(e))
-                    } else {
-                        Ok(())
-                    }
+                    track.play()?;
+                    ctx.say(MusicYoutubeMessage::RESUMED_TRACK).await?;
+                    Ok(())
                 }
-                None => Ok(()),
+                None => {
+                    ctx.say(MusicYoutubeError::NoTrackPlaying.to_string())
+                        .await?;
+                    Ok(())
+                }
             };
         }
     };
 
     if query.starts_with("http") && (query.contains("playlist") || query.contains("list=")) {
+        info!(url = %query, "Extracting playlist URLs");
         let playlist_urls = extract_playlist_urls(&query).await?;
+        info!(count = playlist_urls.len(), "Playlist URLs extracted");
 
         if playlist_urls.is_empty() {
             ctx.say(MusicYoutubeError::NoVideosInPlaylist.to_string())
@@ -66,19 +66,26 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
             return Ok(());
         }
 
-        ctx.say(format!(
-            "Loading {} tracks from playlist in background...",
-            playlist_urls.len()
-        ))
+        let capped = playlist_urls.len() >= MAX_PLAYLIST_TRACKS;
+        ctx.say(if capped {
+            format!("Loading first {MAX_PLAYLIST_TRACKS} tracks from playlist (limit reached)...")
+        } else {
+            format!(
+                "Loading {} tracks from playlist in background...",
+                playlist_urls.len()
+            )
+        })
         .await?;
 
         let handler_clone = handler_lock.clone();
         let http_client_clone = http_client.clone();
+        let channel_id = ctx.channel_id();
+        let serenity_http = Arc::clone(&ctx.serenity_context().http);
 
         let cancel_tokens = ctx.data().playlist_cancel_tokens.clone();
         {
             let tokens = cancel_tokens.read().await;
-            if let Some(existing_token) = tokens.get(&guild_id) {
+            if let Some(existing_token) = tokens.get(&vc.guild_id) {
                 existing_token.cancel();
             }
         }
@@ -86,7 +93,7 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
         let cancel_token = CancellationToken::new();
         {
             let mut tokens = cancel_tokens.write().await;
-            tokens.insert(guild_id, cancel_token.clone());
+            tokens.insert(vc.guild_id, cancel_token.clone());
         }
 
         drop(handler);
@@ -100,24 +107,38 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
                 let src = YoutubeDl::new(http_client_clone.clone(), url);
                 let mut input: Input = src.into();
 
-                if let Ok(metadata) = input.aux_metadata().await {
-                    if cancel_token.is_cancelled() {
-                        break;
+                match input.aux_metadata().await {
+                    Err(e) => {
+                        warn!(error = ?e, "Failed to fetch metadata for playlist track");
+                        continue;
                     }
+                    Ok(metadata) => {
+                        if cancel_token.is_cancelled() {
+                            break;
+                        }
 
-                    let mut handler = handler_clone.lock().await;
-                    let track_handle = handler.enqueue_input(input).await;
+                        let mut handler = handler_clone.lock().await;
+                        let track_handle = handler.enqueue_input(input).await;
 
-                    track_handle
-                        .typemap()
-                        .write()
-                        .await
-                        .insert::<TrackMetaKey>(metadata);
+                        track_handle
+                            .typemap()
+                            .write()
+                            .await
+                            .insert::<TrackMetaKey>(metadata);
+
+                        let _ = track_handle.add_event(
+                            Event::Track(TrackEvent::Play),
+                            TrackPlayNotifier {
+                                channel_id,
+                                http: Arc::clone(&serenity_http),
+                            },
+                        );
+                    }
                 }
             }
 
             let mut tokens = cancel_tokens.write().await;
-            tokens.remove(&guild_id);
+            tokens.remove(&vc.guild_id);
         });
     } else {
         let src = if query.starts_with("http") {
@@ -128,26 +149,23 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
 
         let mut input: Input = src.into();
 
-        let metadata = input.aux_metadata().await?.clone();
+        let metadata = match input.aux_metadata().await {
+            Ok(m) => {
+                debug!(title = ?m.title, source_url = ?m.source_url, "Track metadata fetched");
+                m.clone()
+            }
+            Err(e) => {
+                error!(error = ?e, "Failed to fetch metadata");
+                return Err(e.into());
+            }
+        };
 
         let track_handle = handler.enqueue_input(input).await;
+        info!(queue_length = handler.queue().len(), "Track enqueued");
 
-        let track_info = format!(
-            "{} - {} ({})",
-            metadata
-                .clone()
-                .title
-                .unwrap_or_else(|| MusicYoutubeMessage::UNKNOWN_TITLE.to_string()),
-            metadata
-                .clone()
-                .artist
-                .unwrap_or_else(|| MusicYoutubeMessage::UNKNOWN_ARTIST.to_string()),
-            metadata
-                .clone()
-                .duration
-                .map_or(MusicYoutubeMessage::UNKNOWN_DURATION.to_string(), |d| {
-                    format!("{}:{:02}", d.as_secs() / 60, d.as_secs() % 60)
-                })
+        let queued_message = format!(
+            "{} has been added to the queue",
+            TrackDisplayInfo::from_metadata(&metadata).message()
         );
 
         track_handle
@@ -156,16 +174,32 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
             .await
             .insert::<TrackMetaKey>(metadata);
 
-        ctx.say(format!("`{track_info}` has been added to the queue"))
-            .await?;
+        track_handle.add_event(
+            Event::Track(TrackEvent::Play),
+            TrackPlayNotifier {
+                channel_id: ctx.channel_id(),
+                http: Arc::clone(&ctx.serenity_context().http),
+            },
+        )?;
+
+        ctx.say(queued_message).await?;
     }
 
     Ok(())
 }
 
+const MAX_PLAYLIST_TRACKS: usize = 200;
+
 async fn extract_playlist_urls(playlist_url: &str) -> Result<Vec<String>, Error> {
     let output = Command::new("yt-dlp")
-        .args(["--flat-playlist", "--print", "url", playlist_url])
+        .args([
+            "--flat-playlist",
+            "--print",
+            "webpage_url",
+            "--playlist-end",
+            &MAX_PLAYLIST_TRACKS.to_string(),
+            playlist_url,
+        ])
         .output()
         .map_err(|e| MusicYoutubeError::YtDlpExecutionFailed(e.to_string()))?;
 

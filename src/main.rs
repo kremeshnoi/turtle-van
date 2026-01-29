@@ -18,6 +18,7 @@ impl TypeMapKey for HttpKey {
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt::init();
     dotenv().ok();
 
     let discord_token = std::env::var("DISCORD_TOKEN")

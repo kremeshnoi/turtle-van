@@ -1,34 +1,25 @@
-use super::shared::{MusicYoutubeError, MusicYoutubeMessage};
-use crate::features::music::youtube::commands::shared::get_user_voice_channel_id::get_user_voice_channel_id;
+use tracing::{debug, info};
+
+use super::shared::{MusicYoutubeError, MusicYoutubeMessage, VoiceContext};
 use crate::shared::{Context, Error};
 
-#[poise::command(prefix_command, slash_command, subcommands("all"))]
-pub async fn skip(ctx: Context<'_>) -> Result<(), Error> {
-    let guild_id = ctx.guild_id().ok_or(MusicYoutubeError::GuildIdNotFound)?;
+#[poise::command(prefix_command, slash_command, subcommands("one", "all"))]
+pub async fn skip(_ctx: Context<'_>) -> Result<(), Error> {
+    Ok(())
+}
 
-    if let Err(e) = get_user_voice_channel_id(&ctx) {
-        ctx.say(e.to_string()).await?;
+#[poise::command(prefix_command, slash_command)]
+pub async fn one(ctx: Context<'_>) -> Result<(), Error> {
+    let Some(call) = VoiceContext::validated_call(&ctx).await? else {
         return Ok(());
-    }
-
-    let voice_client = songbird::get(ctx.serenity_context())
-        .await
-        .ok_or(MusicYoutubeError::SongbirdClientNotFound)?
-        .clone();
-
-    let call = match voice_client.get(guild_id) {
-        Some(call) => call,
-        None => {
-            ctx.say(MusicYoutubeError::BotNotInVoiceChannel.to_string())
-                .await?;
-            return Ok(());
-        }
     };
 
     let handler = call.lock().await;
+    debug!(queue_length = handler.queue().len(), "Queue state");
 
     match handler.queue().current() {
         Some(track) => {
+            info!("Skipping current track");
             track.stop()?;
             ctx.say(MusicYoutubeMessage::SKIPPED_TRACK).await?;
         }
@@ -43,41 +34,26 @@ pub async fn skip(ctx: Context<'_>) -> Result<(), Error> {
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn all(ctx: Context<'_>) -> Result<(), Error> {
-    let guild_id = ctx.guild_id().ok_or(MusicYoutubeError::GuildIdNotFound)?;
-
-    if let Err(e) = get_user_voice_channel_id(&ctx) {
-        ctx.say(e.to_string()).await?;
+    let Some(call) = VoiceContext::validated_call(&ctx).await? else {
         return Ok(());
-    }
+    };
 
-    let voice_client = songbird::get(ctx.serenity_context())
-        .await
-        .ok_or(MusicYoutubeError::SongbirdClientNotFound)?
-        .clone();
-
-    let call = match voice_client.get(guild_id) {
-        Some(call) => call,
-        None => {
-            ctx.say(MusicYoutubeError::BotNotInVoiceChannel.to_string())
-                .await?;
-            return Ok(());
+    let vc = VoiceContext::from_ctx(&ctx).await?;
+    let loading_cancelled = {
+        let tokens = ctx.data().playlist_cancel_tokens.read().await;
+        match tokens.get(&vc.guild_id) {
+            Some(token) => {
+                token.cancel();
+                true
+            }
+            None => false,
         }
     };
 
-    let mut loading_cancelled = false;
-    {
-        let tokens = ctx.data().playlist_cancel_tokens.read().await;
-        if let Some(token) = tokens.get(&guild_id) {
-            token.cancel();
-            loading_cancelled = true;
-        }
-    }
-
     let handler = call.lock().await;
-    let queue = handler.queue();
-
-    let count = queue.len();
-    queue.stop();
+    let count = handler.queue().len();
+    info!(count, "Clearing queue");
+    handler.queue().stop();
 
     let message = if count == 0 && !loading_cancelled {
         MusicYoutubeError::QueueEmpty.to_string()

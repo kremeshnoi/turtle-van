@@ -1,34 +1,31 @@
-use songbird::Songbird;
-use std::sync::Arc;
+use tracing::{error, info};
 
-use super::shared::MusicYoutubeError;
+use super::shared::{MusicYoutubeError, MusicYoutubeMessage, VoiceContext};
 use crate::shared::{Context, Error};
-
-async fn leave_channel(ctx: Context<'_>, voice_client: &Arc<Songbird>) -> Result<(), Error> {
-    let guild_id = ctx.guild_id().ok_or(MusicYoutubeError::GuildIdNotFound)?;
-
-    voice_client
-        .remove(guild_id)
-        .await
-        .map_err(|e| Error::from(format!("{}: {e}", MusicYoutubeError::LeaveChannelFailed)))
-}
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
-    let voice_client = songbird::get(ctx.serenity_context())
+    let vc = VoiceContext::from_ctx(&ctx).await?;
+    vc.require_call()?;
+
+    if let Some(token) = ctx
+        .data()
+        .playlist_cancel_tokens
+        .read()
         .await
-        .ok_or(MusicYoutubeError::SongbirdClientNotFound)?
-        .clone();
-
-    let guild_id = ctx.guild_id().ok_or(MusicYoutubeError::GuildIdNotFound)?;
-
-    let has_voice_client = voice_client.get(guild_id).is_some();
-
-    if has_voice_client {
-        leave_channel(ctx, &voice_client).await?;
-    } else {
-        return Err(Error::from(MusicYoutubeError::LeaveChannelFailed));
+        .get(&vc.guild_id)
+    {
+        token.cancel();
+        info!(guild_id = ?vc.guild_id, "Cancelled playlist loading");
     }
+
+    info!(guild_id = ?vc.guild_id, "Leaving voice channel");
+    vc.voice_client.remove(vc.guild_id).await.map_err(|e| {
+        error!(guild_id = ?vc.guild_id, error = %e, "Failed to leave voice channel");
+        Error::from(format!("{}: {e}", MusicYoutubeError::LeaveChannelFailed))
+    })?;
+    info!("Left voice channel");
+    ctx.say(MusicYoutubeMessage::LEFT_CHANNEL).await?;
 
     Ok(())
 }
