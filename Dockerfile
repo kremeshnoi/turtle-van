@@ -19,9 +19,12 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 RUN /root/.cargo/bin/rustup default stable
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# Setup yt-dlp
-RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
-RUN chmod +x /usr/local/bin/yt-dlp
+# Setup deno (JS runtime required by yt-dlp for YouTube JS challenge solving)
+RUN curl -fsSL https://deno.land/install.sh | sh
+ENV PATH="/root/.deno/bin:${PATH}"
+
+# Setup yt-dlp (via pip for latest version + yt-dlp-ejs)
+RUN pip3 install --break-system-packages "yt-dlp[default] @ https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz"
 
 # Setup App
 WORKDIR /app
