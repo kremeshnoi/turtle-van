@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="160" alt="Turtle Van" src="https://github.com/user-attachments/assets/4da2f4b8-420c-4513-b87c-47aa26d1b34f" />
+  <img width="768" height="254" alt="afa5fdfb536a4fb6b48da95d47e35d44 - Copy" src="https://github.com/user-attachments/assets/45c89ffe-1d82-425a-805d-a751942f51f7" />
   <p><b>Turtle Van — Discord music bot built with Rust</b></p>
 </div>
 
@@ -59,3 +59,7 @@ cargo build --release
 - [Songbird](https://github.com/serenity-rs/songbird) - Voice and audio
 - [Tokio](https://tokio.rs) - Async runtime
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) - YouTube extraction
+
+---
+
+<img width="160" alt="Turtle Van" src="https://github.com/user-attachments/assets/4da2f4b8-420c-4513-b87c-47aa26d1b34f" />
