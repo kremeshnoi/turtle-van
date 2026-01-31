@@ -23,8 +23,8 @@
 | `/leave` | Leave current voice channel |
 | `/play <query>` | Play YouTube content (URL, playlist, or search) |
 | `/pause` | Toggle pause/resume |
-| `/skip` | Skip current track |
-| `/skip all` | Clear entire queue and stop playlist loading |
+| `/next` | Skip to the next track |
+| `/clear` | Clear entire queue and stop playlist loading |
 | `/shuffle` | Shuffle the queue |
 | `/now` | Show current track info |
 
@@ -35,7 +35,11 @@
 ### Prerequisites
 
 - Rust 2024 edition
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed and in PATH
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed via pip (not apt):
+  ```bash
+  pip3 install "yt-dlp[default] @ https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz"
+  ```
+- [Deno](https://deno.land) in PATH — required by yt-dlp for YouTube JS challenges
 - Discord bot token with voice permissions
 
 ### Installation

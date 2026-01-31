@@ -4,7 +4,7 @@ impl MusicYoutubeMessage {
     pub const QUEUE_CLEARED: &'static str = "Cleared track(s) from the queue.";
     pub const QUEUE_CLEARED_AND_LOADING_STOPPED: &'static str =
         "Stopped playlist loading and cleared track(s) from the queue.";
-    pub const SKIPPED_TRACK: &'static str = "Skipped current track.";
+    pub const NEXT_TRACK: &'static str = "Skipped to the next track.";
     pub const PAUSED_TRACK: &'static str = "Paused the current track.";
     pub const RESUMED_TRACK: &'static str = "Resumed the current track.";
     pub const JOINED_CHANNEL: &'static str = "Joined the voice channel.";
