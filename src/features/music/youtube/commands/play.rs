@@ -7,8 +7,8 @@ use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 
 use super::shared::{
-    MusicYoutubeError, MusicYoutubeMessage, TrackDisplayInfo, TrackMetaKey, TrackPlayNotifier,
-    VoiceContext, join_voice_channel,
+    MusicYoutubeError, MusicYoutubeMessage, TrackMetaKey, TrackPlayNotifier, VoiceContext,
+    join_voice_channel,
 };
 use crate::HttpKey;
 use crate::shared::{Context, Error};
@@ -163,11 +163,6 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
         let track_handle = handler.enqueue_input(input).await;
         info!(queue_length = handler.queue().len(), "Track enqueued");
 
-        let queued_message = format!(
-            "{} has been added to the queue",
-            TrackDisplayInfo::from_metadata(&metadata).message()
-        );
-
         track_handle
             .typemap()
             .write()
@@ -181,8 +176,6 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
                 http: Arc::clone(&ctx.serenity_context().http),
             },
         )?;
-
-        ctx.say(queued_message).await?;
     }
 
     Ok(())
