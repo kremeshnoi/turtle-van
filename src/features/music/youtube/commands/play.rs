@@ -7,8 +7,8 @@ use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 
 use super::shared::{
-    MusicYoutubeError, MusicYoutubeMessage, TrackMetaKey, TrackPlayNotifier, VoiceContext,
-    join_voice_channel,
+    MusicYoutubeError, MusicYoutubeMessage, TrackDisplayInfo, TrackMetaKey, TrackPlayNotifier,
+    VoiceContext, join_voice_channel,
 };
 use crate::HttpKey;
 use crate::shared::{Context, Error};
@@ -160,6 +160,8 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
             }
         };
 
+        let queued = !handler.queue().is_empty();
+
         let track_handle = handler.enqueue_input(input).await;
         info!(queue_length = handler.queue().len(), "Track enqueued");
 
@@ -167,7 +169,7 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
             .typemap()
             .write()
             .await
-            .insert::<TrackMetaKey>(metadata);
+            .insert::<TrackMetaKey>(metadata.clone());
 
         track_handle.add_event(
             Event::Track(TrackEvent::Play),
@@ -176,6 +178,14 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
                 http: Arc::clone(&ctx.serenity_context().http),
             },
         )?;
+
+        if queued {
+            ctx.say(format!(
+                "{} has been added to the queue",
+                TrackDisplayInfo::from_metadata(&metadata).message()
+            ))
+            .await?;
+        }
     }
 
     Ok(())
