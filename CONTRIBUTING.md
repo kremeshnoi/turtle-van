@@ -1,41 +1,40 @@
 # Contributing
 
-## Prerequisites
-
-- Rust 2024 edition
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed via pip (not apt):
-  ```bash
-  pip3 install "yt-dlp[default] @ https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz"
-  ```
-- [Deno](https://deno.land) in PATH — required by yt-dlp for YouTube JS challenges
-- Discord bot token with voice permissions
-
-## Setup
-
-```bash
-git clone https://github.com/kremeshnoi/turtle-van.git
-cd turtle-van
-cp .env.example .env
-# Add your DISCORD_TOKEN to .env
-cargo run
-```
-
 ## Development Workflow
 
-1. Create a branch from `main`
-2. Make your changes
-3. Run checks before committing:
+1. Create a GitHub issue or pick an existing one
+2. Create a branch from `main` following the [branch naming](#branch-naming) convention
+3. Make your changes
+4. Run checks:
    ```bash
    cargo fmt
    cargo clippy --all-targets --all-features -- -D warnings
    cargo test
    ```
-4. Commit using [Angular convention](#commit-messages)
-5. Open a pull request against `main`
+5. Commit following the [commit message](#commit-messages) convention
+6. Open a pull request against `main`
+
+## Branch Naming
+
+Branches follow the Angular type prefix with the project issue number:
+
+```
+<type>/VAN-<issue-number>
+```
+
+**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+
+Examples:
+
+```
+feat/VAN-42
+fix/VAN-15
+docs/VAN-7
+```
 
 ## Commit Messages
 
-Follow the Angular (Google) format:
+Follow the [Angular commit message convention](https://github.com/angular/angular/blob/main/contributing-docs/commit-message-guidelines.md):
 
 ```
 <type>(<scope>): <subject>
@@ -44,32 +43,15 @@ Follow the Angular (Google) format:
 - Type and subject in **lowercase**, no period at the end
 - Scope is recommended
 - Subject ≤ 100 characters
-
-**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+- Use the same type list as branch naming
 
 Examples:
+
 ```
 feat(music): add queue repeat mode
 fix(play): handle empty playlist gracefully
 docs(readme): update command list
 ```
-
-## Git Ignore Policy
-
-`.gitignore` in this repository only tracks project artifacts (`/target/`, `.env`, etc.). Personal tooling configs (IDE settings, editor configs like `.idea/`, `.vscode/`, `.DS_Store`) must be added to your global gitignore (`~/.gitignore`), not to the repository's `.gitignore`.
-
-## Code Style
-
-- 4-space indentation, ~100 char line length
-- No comments unless the logic is non-obvious
-- `?` operator for error propagation
-- Domain errors via `thiserror`
-
-## Adding a New Command
-
-1. Create a file in `src/features/music/youtube/commands/`
-2. Define the command with `#[poise::command(prefix_command, slash_command)]`
-3. Add it to the vec in `commands/mod.rs`
 
 ## Tests
 
@@ -77,3 +59,7 @@ docs(readme): update command list
 - Follow Arrange-Act-Assert pattern
 - Use `test_` prefix for function names
 - Prefer `assert_eq!` over `assert!`
+
+## Gitignore Policy
+
+`.gitignore` tracks only project artifacts (`/target/`, `.env`, etc.). Personal tooling configs (`.idea/`, `.vscode/`, `.DS_Store`) belong in your global gitignore (`~/.gitignore`), not in the repository.
