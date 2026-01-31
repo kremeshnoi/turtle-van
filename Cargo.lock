@@ -3096,6 +3096,7 @@ dependencies = [
  "poise",
  "rand",
  "reqwest",
+ "serde_json",
  "serenity",
  "songbird",
  "symphonia",

@@ -2,6 +2,9 @@
 name = "turtle-van"
 version = "1.0.0"
 edition = "2024"
+description = "Discord Music Bot"
+repository = "https://github.com/kremeshnoi/turtle-van"
+authors = ["kremeshnoi"]
 
 [dependencies]
 serenity = { version="0.12.1", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "voice", "cache", "standard_framework"] }
@@ -18,3 +21,6 @@ reqwest = { version = "0.11", default-features = false, features = ["rustls-tls"
 poise = { version = "0.6.1-rc1", features = ["cache"] }
 thiserror = "1.0.69"
 async-trait = "0.1.89"
+
+[dev-dependencies]
+serde_json = "1"
