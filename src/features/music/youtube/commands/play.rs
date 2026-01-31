@@ -188,7 +188,7 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
     Ok(())
 }
 
-const MAX_PLAYLIST_TRACKS: usize = 200;
+const MAX_PLAYLIST_TRACKS: usize = 1000;
 
 async fn extract_playlist_urls(playlist_url: &str) -> Result<Vec<String>, Error> {
     let output = Command::new("yt-dlp")
