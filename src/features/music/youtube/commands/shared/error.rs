@@ -40,4 +40,7 @@ pub enum MusicYoutubeError {
 
     #[error("Need at least 2 tracks in queue to shuffle.")]
     QueueTooShortToShuffle,
+
+    #[error("No shuffle history available. Use /shuffle first.")]
+    NoShuffleHistory,
 }

@@ -10,6 +10,8 @@ pub async fn shuffle(ctx: Context<'_>) -> Result<(), Error> {
     let Some(call) = VoiceContext::validated_call(&ctx).await? else {
         return Ok(());
     };
+
+    let vc = VoiceContext::from_ctx(&ctx).await?;
     let handler = call.lock().await;
 
     if handler.queue().len() < 2 {
@@ -19,7 +21,11 @@ pub async fn shuffle(ctx: Context<'_>) -> Result<(), Error> {
     }
 
     info!(count = handler.queue().len(), "Shuffling queue");
+
+    let mut original_uuids = Vec::new();
     handler.queue().modify_queue(|q| {
+        original_uuids.extend(q.iter().map(|track| track.uuid()));
+
         if let Some(current) = q.pop_front() {
             let mut rest: Vec<_> = q.drain(..).collect();
             rest.shuffle(&mut thread_rng());
@@ -27,6 +33,13 @@ pub async fn shuffle(ctx: Context<'_>) -> Result<(), Error> {
             q.extend(rest);
         }
     });
+
+    ctx.data()
+        .music_youtube
+        .pre_shuffle_order
+        .write()
+        .await
+        .insert(vc.guild_id, original_uuids);
 
     ctx.say(MusicYoutubeMessage::QUEUE_SHUFFLED).await?;
 

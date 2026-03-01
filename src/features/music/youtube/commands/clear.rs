@@ -21,6 +21,13 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
         }
     };
 
+    ctx.data()
+        .music_youtube
+        .pre_shuffle_order
+        .write()
+        .await
+        .remove(&vc.guild_id);
+
     let handler = call.lock().await;
     let count = handler.queue().len();
     info!(count, "Clearing queue");

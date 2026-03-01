@@ -20,6 +20,13 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
         info!(guild_id = ?vc.guild_id, "Cancelled playlist loading");
     }
 
+    ctx.data()
+        .music_youtube
+        .pre_shuffle_order
+        .write()
+        .await
+        .remove(&vc.guild_id);
+
     info!(guild_id = ?vc.guild_id, "Leaving voice channel");
     vc.voice_client
         .remove(vc.guild_id)
