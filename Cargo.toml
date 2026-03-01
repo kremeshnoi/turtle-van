@@ -1,6 +1,6 @@
 [package]
 name = "turtle-van"
-version = "1.0.6"
+version = "1.0.8"
 edition = "2024"
 description = "Discord Music Bot"
 repository = "https://github.com/kremeshnoi/turtle-van"
