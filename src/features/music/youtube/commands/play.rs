@@ -10,7 +10,6 @@ use super::shared::{
     MusicYoutubeError, MusicYoutubeMessage, TrackDisplayInfo, TrackMetaKey, TrackPlayNotifier,
     VoiceContext, join_voice_channel,
 };
-use crate::HttpKey;
 use crate::shared::{Context, Error};
 
 #[poise::command(prefix_command, slash_command)]
@@ -19,12 +18,7 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
     let user_channel = VoiceContext::require_user_channel(&ctx)
         .map_err(|_| MusicYoutubeError::JoinChannelFailed)?;
 
-    let http_client = {
-        let data = ctx.serenity_context().data.read().await;
-        data.get::<HttpKey>()
-            .cloned()
-            .ok_or(MusicYoutubeError::HttpClientNotFound)?
-    };
+    let http_client = ctx.data().http_client.clone();
 
     info!(guild_id = ?vc.guild_id, channel_id = ?user_channel, "Joining voice channel");
     let handler_lock = join_voice_channel(&vc.voice_client, vc.guild_id, user_channel).await?;
@@ -82,7 +76,7 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
         let channel_id = ctx.channel_id();
         let serenity_http = Arc::clone(&ctx.serenity_context().http);
 
-        let cancel_tokens = ctx.data().playlist_cancel_tokens.clone();
+        let cancel_tokens = ctx.data().music_youtube.playlist_cancel_tokens.clone();
         {
             let tokens = cancel_tokens.read().await;
             if let Some(existing_token) = tokens.get(&vc.guild_id) {
@@ -208,9 +202,7 @@ async fn extract_playlist_urls(playlist_url: &str) -> Result<Vec<String>, Error>
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(Error::from(MusicYoutubeError::YtDlpFailed(
-            stderr.to_string(),
-        )));
+        return Err(MusicYoutubeError::YtDlpFailed(stderr.to_string()).into());
     }
 
     let urls = String::from_utf8_lossy(&output.stdout)

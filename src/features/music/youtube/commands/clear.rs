@@ -11,7 +11,7 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
 
     let vc = VoiceContext::from_ctx(&ctx).await?;
     let loading_cancelled = {
-        let tokens = ctx.data().playlist_cancel_tokens.read().await;
+        let tokens = ctx.data().music_youtube.playlist_cancel_tokens.read().await;
         match tokens.get(&vc.guild_id) {
             Some(token) => {
                 token.cancel();

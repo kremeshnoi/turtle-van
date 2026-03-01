@@ -1,6 +1,6 @@
 [package]
 name = "turtle-van"
-version = "1.0.5"
+version = "1.0.6"
 edition = "2024"
 description = "Discord Music Bot"
 repository = "https://github.com/kremeshnoi/turtle-van"
@@ -19,6 +19,7 @@ tracing-subscriber = { version = "0.3", features = ["fmt"] }
 
 reqwest = { version = "0.11", default-features = false, features = ["rustls-tls", "json", "socks"] }
 poise = { version = "0.6.1-rc1", features = ["cache"] }
+anyhow = "1"
 thiserror = "1.0.69"
 async-trait = "0.1.89"
 

@@ -10,6 +10,7 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
 
     if let Some(token) = ctx
         .data()
+        .music_youtube
         .playlist_cancel_tokens
         .read()
         .await
@@ -20,10 +21,13 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
     }
 
     info!(guild_id = ?vc.guild_id, "Leaving voice channel");
-    vc.voice_client.remove(vc.guild_id).await.map_err(|e| {
-        error!(guild_id = ?vc.guild_id, error = %e, "Failed to leave voice channel");
-        Error::from(format!("{}: {e}", MusicYoutubeError::LeaveChannelFailed))
-    })?;
+    vc.voice_client
+        .remove(vc.guild_id)
+        .await
+        .inspect_err(
+            |e| error!(guild_id = ?vc.guild_id, error = %e, "Failed to leave voice channel"),
+        )
+        .map_err(|_| MusicYoutubeError::LeaveChannelFailed)?;
     info!("Left voice channel");
     ctx.say(MusicYoutubeMessage::LEFT_CHANNEL).await?;
 

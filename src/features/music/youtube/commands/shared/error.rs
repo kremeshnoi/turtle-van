@@ -23,9 +23,6 @@ pub enum MusicYoutubeError {
     #[error("Failed to retrieve Songbird voice client")]
     SongbirdClientNotFound,
 
-    #[error("Failed to retrieve HTTP client")]
-    HttpClientNotFound,
-
     #[error("Failed to execute yt-dlp: {0}")]
     YtDlpExecutionFailed(String),
 

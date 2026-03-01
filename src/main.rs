@@ -1,28 +1,20 @@
 mod features;
 mod shared;
-use crate::shared::AppError;
-use crate::shared::Data;
-use crate::shared::*;
+
+use anyhow::Context;
 use dotenv::dotenv;
 use features::music;
-
 use poise::serenity_prelude;
-use reqwest::Client as HttpClient;
-use serenity::prelude::TypeMapKey;
+use shared::Data;
 use songbird::SerenityInit;
 
-struct HttpKey;
-impl TypeMapKey for HttpKey {
-    type Value = HttpClient;
-}
-
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     dotenv().ok();
 
-    let discord_token = std::env::var("DISCORD_TOKEN")
-        .unwrap_or_else(|_| panic!("{}", AppError::DiscordTokenNotFound));
+    let discord_token =
+        std::env::var("DISCORD_TOKEN").context("Failed to retrieve DISCORD_TOKEN")?;
 
     let all_commands = {
         let mut cmds = Vec::new();
@@ -38,7 +30,7 @@ async fn main() {
 
     let framework_options = poise::FrameworkOptions {
         prefix_options: poise::PrefixFrameworkOptions {
-            prefix: Some(CMD_PREFIX_SIGN.into()),
+            prefix: Some("van!".into()),
             case_insensitive_commands: true,
             ..Default::default()
         },
@@ -59,11 +51,10 @@ async fn main() {
     let mut client = serenity_prelude::ClientBuilder::new(discord_token, gateway_intents)
         .framework(framework)
         .register_songbird()
-        .type_map_insert::<HttpKey>(HttpClient::new())
         .await
-        .unwrap_or_else(|_| panic!("{}", AppError::ClientCreateFailed));
+        .context("Failed to create client")?;
 
-    if let Err(error) = client.start().await {
-        println!("{}", AppError::ClientStartFailed(error.to_string()));
-    }
+    client.start().await.context("Failed to start client")?;
+
+    Ok(())
 }
