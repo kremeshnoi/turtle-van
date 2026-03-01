@@ -8,7 +8,7 @@ authors = ["kremeshnoi"]
 
 [dependencies]
 serenity = { version="0.12.1", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "voice", "cache", "standard_framework"] }
-songbird = { version = "0.4.1", features = ["builtin-queue"] }
+songbird = { version = "0.5.0", features = ["builtin-queue"] }
 symphonia = { version = "0.5", features = [ "all-formats" ] }
 dotenv = "0.15"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync"] }
