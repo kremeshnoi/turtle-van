@@ -1,5 +1,23 @@
 # Notes
 
+## 2026-03-29: Discord DAVE (E2EE) protocol required — voice connection refused
+
+### Problem
+Bot could not join voice channels. Songbird failed with `establishing connection failed`. The Discord voice WebSocket closed with code 4017: `E2EE/DAVE protocol required`.
+
+### Cause
+Discord began enforcing the DAVE (Discord Audio/Video Encryption) end-to-end encryption protocol for all non-Stage voice channels in March 2026. Songbird 0.4.x does not implement DAVE, so Discord's voice server rejects the connection.
+
+### Solution
+1. Updated songbird from `0.4.x` (crates.io) to `0.5.0` from the `next` git branch, which includes DAVE support (PR [serenity-rs/songbird#291](https://github.com/serenity-rs/songbird/pull/291), merged 2026-03-28)
+2. Updated reqwest from `0.11` to `0.12` (required by songbird 0.5)
+3. Migrated from songbird 0.4 `TrackHandle::typemap()` API to songbird 0.5 `Track::new_with_data()` / `TrackHandle::data::<T>()` API
+4. Added `ctx.defer()` to `/play` and `/join` commands to prevent Discord interaction timeouts during voice connection
+
+### Important
+- Songbird 0.5.0 with DAVE is not yet published to crates.io — using git dependency until a release is made
+- Once songbird publishes a crates.io release with DAVE, switch back to a versioned dependency
+
 ## 2026-01-29: YouTube 403 Forbidden — yt-dlp requires JS runtime
 
 ### Problem

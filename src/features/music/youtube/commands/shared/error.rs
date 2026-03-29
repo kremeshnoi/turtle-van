@@ -32,6 +32,9 @@ pub enum MusicYoutubeError {
     #[error("No track is currently playing.")]
     NoTrackPlaying,
 
+    #[error("No results found for the given query.")]
+    NoResultsFound,
+
     #[error("No videos found in playlist.")]
     NoVideosInPlaylist,
 

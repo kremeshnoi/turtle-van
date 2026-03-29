@@ -1,31 +1,30 @@
 use songbird::events::{Event, TrackEvent};
 use songbird::input::{Input, YoutubeDl};
+use songbird::tracks::Track;
 use std::process::Command;
 use std::sync::Arc;
 use tokio::task;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info, warn};
 
 use super::shared::{
-    MusicYoutubeError, MusicYoutubeMessage, TrackDisplayInfo, TrackMetaKey, TrackPlayNotifier,
-    VoiceContext, join_voice_channel,
+    MusicYoutubeError, MusicYoutubeMessage, TrackDisplayInfo, TrackPlayNotifier, VoiceContext,
+    join_voice_channel,
 };
 use crate::shared::{Context, Error};
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(), Error> {
+    ctx.defer().await?;
+
     let vc = VoiceContext::from_ctx(&ctx).await?;
     let user_channel = VoiceContext::require_user_channel(&ctx)
         .map_err(|_| MusicYoutubeError::JoinChannelFailed)?;
 
     let http_client = ctx.data().http_client.clone();
 
-    info!(guild_id = ?vc.guild_id, channel_id = ?user_channel, "Joining voice channel");
     let handler_lock = join_voice_channel(&vc.voice_client, vc.guild_id, user_channel).await?;
-    info!("Joined voice channel");
-
     let mut handler = handler_lock.lock().await;
-    debug!(queue_length = handler.queue().len(), "Queue state");
 
     let query = match query {
         Some(q) => {
@@ -111,14 +110,10 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
                             break;
                         }
 
+                        let track =
+                            Track::new_with_data(input, Arc::new(metadata));
                         let mut handler = handler_clone.lock().await;
-                        let track_handle = handler.enqueue_input(input).await;
-
-                        track_handle
-                            .typemap()
-                            .write()
-                            .await
-                            .insert::<TrackMetaKey>(metadata);
+                        let track_handle = handler.enqueue(track).await;
 
                         let _ = track_handle.add_event(
                             Event::Track(TrackEvent::Play),
@@ -144,26 +139,20 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
         let mut input: Input = src.into();
 
         let metadata = match input.aux_metadata().await {
-            Ok(m) => {
-                debug!(title = ?m.title, source_url = ?m.source_url, "Track metadata fetched");
-                m.clone()
-            }
+            Ok(m) => m.clone(),
             Err(e) => {
                 error!(error = ?e, "Failed to fetch metadata");
-                return Err(e.into());
+                ctx.say(MusicYoutubeError::NoResultsFound.to_string())
+                    .await?;
+                return Ok(());
             }
         };
 
         let queued = !handler.queue().is_empty();
 
-        let track_handle = handler.enqueue_input(input).await;
+        let track = Track::new_with_data(input, Arc::new(metadata.clone()));
+        let track_handle = handler.enqueue(track).await;
         info!(queue_length = handler.queue().len(), "Track enqueued");
-
-        track_handle
-            .typemap()
-            .write()
-            .await
-            .insert::<TrackMetaKey>(metadata.clone());
 
         track_handle.add_event(
             Event::Track(TrackEvent::Play),

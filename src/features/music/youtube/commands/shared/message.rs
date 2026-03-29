@@ -14,7 +14,6 @@ impl MusicYoutubeMessage {
     pub const REPEAT_DISABLED: &'static str = "Repeat disabled.";
     pub const QUEUE_SHUFFLED: &'static str = "Shuffled the queue.";
     pub const QUEUE_UNSHUFFLED: &'static str = "Restored the original queue order.";
-    pub const NO_METADATA_AVAILABLE: &'static str = "No metadata available for current track.";
     pub const UNKNOWN_TITLE: &'static str = "Unknown Title";
     pub const UNKNOWN_ARTIST: &'static str = "Unknown Artist";
     pub const UNKNOWN_DURATION: &'static str = "Unknown Duration";

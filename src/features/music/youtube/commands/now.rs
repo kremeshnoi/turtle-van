@@ -1,9 +1,8 @@
+use songbird::input::AuxMetadata;
 use songbird::tracks::PlayMode;
 use tracing::debug;
 
-use super::shared::{
-    MusicYoutubeError, MusicYoutubeMessage, TrackDisplayInfo, TrackMetaKey, VoiceContext,
-};
+use super::shared::{MusicYoutubeError, MusicYoutubeMessage, TrackDisplayInfo, VoiceContext};
 use crate::shared::{Context, Error};
 
 #[poise::command(prefix_command, slash_command)]
@@ -33,13 +32,11 @@ pub async fn now(ctx: Context<'_>) -> Result<(), Error> {
         _ => MusicYoutubeMessage::STATE_STOPPED,
     };
 
-    let message = match track.typemap().read().await.get::<TrackMetaKey>() {
-        Some(meta) => format!(
-            "{state}: {}",
-            TrackDisplayInfo::from_metadata(meta).message()
-        ),
-        None => format!("{state}\n{}", MusicYoutubeMessage::NO_METADATA_AVAILABLE),
-    };
+    let meta = track.data::<AuxMetadata>();
+    let message = format!(
+        "{state}: {}",
+        TrackDisplayInfo::from_metadata(&meta).message()
+    );
 
     ctx.say(message).await?;
 
