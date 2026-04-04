@@ -1,15 +1,25 @@
 [package]
 name = "turtle-van"
-version = "1.0.9"
+version = "1.0.10"
 edition = "2024"
 description = "Discord Music Bot"
 repository = "https://github.com/kremeshnoi/turtle-van"
 authors = ["kremeshnoi"]
 
 [dependencies]
-serenity = { version="0.12.1", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "voice", "cache", "standard_framework"] }
-songbird = { git = "https://github.com/serenity-rs/songbird", branch = "next", features = ["builtin-queue"] }
-symphonia = { version = "0.5", features = [ "all-formats" ] }
+serenity = { version = "0.12.1", default-features = false, features = [
+  "client",
+  "gateway",
+  "rustls_backend",
+  "model",
+  "voice",
+  "cache",
+  "standard_framework",
+] }
+songbird = { git = "https://github.com/serenity-rs/songbird", branch = "next", features = [
+  "builtin-queue",
+] }
+symphonia = { version = "0.5", features = ["all-formats"] }
 dotenv = "0.15"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync"] }
 tokio-util = "0.7"
@@ -17,7 +27,11 @@ rand = "0.8"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt"] }
 
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "socks"] }
+reqwest = { version = "0.12", default-features = false, features = [
+  "rustls-tls",
+  "json",
+  "socks",
+] }
 poise = { version = "0.6.1-rc1", features = ["cache"] }
 anyhow = "1"
 uuid = "1"
