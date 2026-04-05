@@ -36,6 +36,7 @@
 
 - Rust 2024 edition
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed via pip (not apt):
+  
   ```bash
   pip3 install "yt-dlp[default] @ https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz"
   ```
