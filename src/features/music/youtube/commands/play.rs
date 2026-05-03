@@ -110,8 +110,7 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
                             break;
                         }
 
-                        let track =
-                            Track::new_with_data(input, Arc::new(metadata));
+                        let track = Track::new_with_data(input, Arc::new(metadata));
                         let mut handler = handler_clone.lock().await;
                         let track_handle = handler.enqueue(track).await;
 
