@@ -1,4 +1,4 @@
-name: Scheduled redeploy
+name: Scheduled Redeploy
 
 on:
   schedule:
