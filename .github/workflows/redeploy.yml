@@ -16,4 +16,4 @@ jobs:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       SVC_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
     steps:
-      - run: railway redeploy --service=${{ env.SVC_ID }} --environment=production --yes
+      - run: railway redeploy --service=${{ env.SVC_ID }} --yes
