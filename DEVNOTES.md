@@ -1,5 +1,39 @@
 # Notes
 
+## 2026-05-03: YouTube bot-detection — daily redeploy workaround
+
+### Problem
+`/play` started failing with yt-dlp errors like:
+```
+ERROR: [youtube] <id>: Sign in to confirm you're not a bot. Use --cookies-from-browser
+or --cookies for the authentication.
+```
+A manual `railway redeploy` consistently clears the error and playback resumes immediately.
+
+### Working theory (not verified)
+We believe YouTube's bot detection is flagging the Railway deployment's egress IP, and
+spinning up a new container assigns a fresh IP that hasn't been flagged yet. This is an
+inference from the observed behavior — what we've actually confirmed is only that
+`railway redeploy` makes the error go away. Other plausible explanations exist
+(stale yt-dlp/extractor cache, process-level state, Songbird/HTTP client state) and have
+not been ruled out. Treat the IP-rotation explanation as a working hypothesis, not a
+root cause.
+
+### Workaround
+Scheduled GitHub Actions workflow at `.github/workflows/redeploy.yml` runs
+`railway redeploy` every day at 21:00 UTC (00:00 Riga in summer, 23:00 Riga in winter).
+The workflow also exposes `workflow_dispatch` so it can be triggered on demand from the
+Actions tab if a block hits mid-day.
+
+### Important
+- GitHub Actions cron is UTC-only, so the local fire time drifts 1h across DST. This is
+  acceptable for a low-traffic music bot; don't try to "fix" it with two cron entries.
+- Redeploy disconnects the bot from any active voice channels and drops queues — the
+  00:00 Riga schedule was chosen specifically to minimize that impact.
+- If redeploys stop clearing the error, escalate to cookie-based auth (`--cookies` via
+  a Netscape cookies file mounted as a volume) before investing in heavier fixes like
+  a PO Token provider sidecar.
+
 ## 2026-03-29: Discord DAVE (E2EE) protocol required — voice connection refused
 
 ### Problem

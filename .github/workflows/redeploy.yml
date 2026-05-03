@@ -1,0 +1,19 @@
+name: Scheduled redeploy
+
+on:
+  schedule:
+    # 21:00 UTC = 00:00 Riga (EEST, summer) / 23:00 Riga (EET, winter).
+    # GitHub Actions cron is UTC-only; the DST drift is intentional.
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    environment: Production
+    container: ghcr.io/railwayapp/cli:latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      SVC_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+    steps:
+      - run: railway redeploy --service=${{ env.SVC_ID }} --environment=production --yes
