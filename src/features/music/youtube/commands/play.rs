@@ -97,7 +97,8 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
                     break;
                 }
 
-                let src = YoutubeDl::new(http_client_clone.clone(), url);
+                let src =
+                    YoutubeDl::new(http_client_clone.clone(), url).user_args(prefer_https_args());
                 let mut input: Input = src.into();
 
                 match input.aux_metadata().await {
@@ -130,9 +131,9 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
         });
     } else {
         let src = if query.starts_with("http") {
-            YoutubeDl::new(http_client.clone(), query.clone())
+            YoutubeDl::new(http_client.clone(), query.clone()).user_args(prefer_https_args())
         } else {
-            YoutubeDl::new_search(http_client.clone(), query.clone())
+            YoutubeDl::new_search(http_client.clone(), query.clone()).user_args(prefer_https_args())
         };
 
         let mut input: Input = src.into();
@@ -174,6 +175,10 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
 }
 
 const MAX_PLAYLIST_TRACKS: usize = 300;
+
+fn prefer_https_args() -> Vec<String> {
+    vec!["-S".to_string(), "proto:https".to_string()]
+}
 
 async fn extract_playlist_urls(playlist_url: &str) -> Result<Vec<String>, Error> {
     let output = Command::new("yt-dlp")
