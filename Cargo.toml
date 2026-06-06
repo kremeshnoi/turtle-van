@@ -1,6 +1,6 @@
 [package]
 name = "turtle-van"
-version = "1.0.11"
+version = "1.0.12"
 edition = "2024"
 description = "Discord Music Bot"
 repository = "https://github.com/kremeshnoi/turtle-van"
@@ -19,7 +19,15 @@ serenity = { version = "0.12.1", default-features = false, features = [
 songbird = { git = "https://github.com/serenity-rs/songbird", branch = "next", features = [
   "builtin-queue",
 ] }
-symphonia = { version = "0.5", features = ["all-formats"] }
+symphonia = { version = "=0.5.4", features = [
+  "all-formats",
+  "aac",
+  "alac",
+  "flac",
+  "pcm",
+  "adpcm",
+  "vorbis",
+] }
 dotenv = "0.15"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync"] }
 tokio-util = "0.7"
