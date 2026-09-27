@@ -1,5 +1,5 @@
+use rand::rng;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
 use tracing::info;
 
 use super::shared::{MusicYoutubeError, MusicYoutubeMessage, VoiceContext};
@@ -28,7 +28,7 @@ pub async fn shuffle(ctx: Context<'_>) -> Result<(), Error> {
 
         if let Some(current) = q.pop_front() {
             let mut rest: Vec<_> = q.drain(..).collect();
-            rest.shuffle(&mut thread_rng());
+            rest.shuffle(&mut rng());
             q.push_back(current);
             q.extend(rest);
         }

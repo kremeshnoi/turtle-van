@@ -2,7 +2,7 @@ mod features;
 mod shared;
 
 use anyhow::Context;
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use features::music;
 use poise::serenity_prelude;
 use shared::Data;
