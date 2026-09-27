@@ -35,6 +35,12 @@ pub enum MusicYoutubeError {
     #[error("No results found for the given query.")]
     NoResultsFound,
 
+    #[error("YouTube asked to confirm this is not a bot, so the track could not be loaded.")]
+    YoutubeBotCheck,
+
+    #[error("Failed to load the track.")]
+    TrackLoadFailed,
+
     #[error("No videos found in playlist.")]
     NoVideosInPlaylist,
 

@@ -142,7 +142,7 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
             Ok(m) => m.clone(),
             Err(e) => {
                 error!(error = ?e, "Failed to fetch metadata");
-                ctx.say(MusicYoutubeError::NoResultsFound.to_string())
+                ctx.say(classify_metadata_error(&e.to_string()).to_string())
                     .await?;
                 return Ok(());
             }
@@ -176,6 +176,16 @@ pub async fn play(ctx: Context<'_>, #[rest] query: Option<String>) -> Result<(),
 
 const MAX_PLAYLIST_TRACKS: usize = 300;
 
+fn classify_metadata_error(message: &str) -> MusicYoutubeError {
+    if message.contains("no results found for") {
+        MusicYoutubeError::NoResultsFound
+    } else if message.contains("Sign in to confirm you") {
+        MusicYoutubeError::YoutubeBotCheck
+    } else {
+        MusicYoutubeError::TrackLoadFailed
+    }
+}
+
 fn prefer_https_args() -> Vec<String> {
     vec!["-S".to_string(), "proto:https".to_string()]
 }
@@ -205,4 +215,48 @@ async fn extract_playlist_urls(playlist_url: &str) -> Result<Vec<String>, Error>
         .collect();
 
     Ok(urls)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_classify_metadata_error_returns_no_results_when_search_is_empty() {
+        let message = "failed to get aux_metadata: aux_metadata error from Compose: \
+            failed to create audio: no results found for 'ytsearch1:qwerty'";
+
+        let result = classify_metadata_error(message);
+
+        assert_eq!(
+            result.to_string(),
+            MusicYoutubeError::NoResultsFound.to_string()
+        );
+    }
+
+    #[test]
+    fn test_classify_metadata_error_returns_bot_check_when_youtube_requires_sign_in() {
+        let message = "failed to create audio: yt-dlp failed with non-zero status code: \
+            ERROR: [youtube] ap89zgtWr_I: Sign in to confirm you’re not a bot.";
+
+        let result = classify_metadata_error(message);
+
+        assert_eq!(
+            result.to_string(),
+            MusicYoutubeError::YoutubeBotCheck.to_string()
+        );
+    }
+
+    #[test]
+    fn test_classify_metadata_error_returns_load_failed_for_other_errors() {
+        let message = "failed to create audio: yt-dlp failed with non-zero status code: \
+            ERROR: [youtube] 8p23ni7I4IY: Video unavailable";
+
+        let result = classify_metadata_error(message);
+
+        assert_eq!(
+            result.to_string(),
+            MusicYoutubeError::TrackLoadFailed.to_string()
+        );
+    }
 }
