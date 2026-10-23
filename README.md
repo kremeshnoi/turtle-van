@@ -64,7 +64,3 @@ cargo build --release
 - [Songbird](https://github.com/serenity-rs/songbird) - Voice and audio
 - [Tokio](https://tokio.rs) - Async runtime
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) - YouTube extraction
-
----
-
-<img width="160" alt="Turtle Van" src="https://github.com/user-attachments/assets/4da2f4b8-420c-4513-b87c-47aa26d1b34f" />
