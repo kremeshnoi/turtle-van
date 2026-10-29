@@ -2,8 +2,6 @@
 
 Discord music bot
 
----
-
 ## Features
 
 - YouTube playback (search, URL, playlists)
