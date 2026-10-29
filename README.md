@@ -1,7 +1,6 @@
-<div align="center">
-  <img width="768" height="254" alt="afa5fdfb536a4fb6b48da95d47e35d44 - Copy" src="https://github.com/user-attachments/assets/45c89ffe-1d82-425a-805d-a751942f51f7" />
-  <p><b>Turtle Van — Discord music bot built with Rust</b></p>
-</div>
+# Turtle Van
+
+Discord music bot
 
 ---
 
